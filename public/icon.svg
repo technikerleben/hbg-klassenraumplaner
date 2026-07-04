@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="92" fill="#245688"/>
+  <path d="M0 0h512v132H0z" fill="#791D22"/>
+  <rect x="74" y="94" width="364" height="322" rx="20" fill="#F7F5F2"/>
+  <rect x="116" y="148" width="280" height="34" rx="6" fill="#163A5C"/>
+  <g fill="#791D22">
+    <rect x="128" y="232" width="104" height="58" rx="7"/>
+    <rect x="280" y="232" width="104" height="58" rx="7"/>
+  </g>
+  <g fill="#3F6B4D">
+    <circle cx="154" cy="330" r="22"/>
+    <circle cx="207" cy="330" r="22"/>
+    <circle cx="306" cy="330" r="22"/>
+    <circle cx="359" cy="330" r="22"/>
+  </g>
+  <text x="256" y="73" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="42" fill="#FFFFFF" letter-spacing="2">HBG</text>
+</svg>
