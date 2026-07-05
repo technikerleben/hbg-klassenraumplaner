@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Ruler } from 'lucide-react';
 import { usePlannerStore } from '../store/usePlannerStore';
-import { RoomSurveyAssistant } from './RoomSurveyAssistant';
+import { RoomSurveyAssistant } from './RoomSurveyPortal';
 import '../roomAssistantCard.css';
 
 export function RoomPanel() {
