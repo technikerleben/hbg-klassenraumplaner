@@ -70,7 +70,10 @@ export function sanitizeProject(input: unknown): ProjectFile {
   project.variants.forEach((variant) => {
     variant.objects.forEach((object) => {
       const catalogItem = getCatalogItem(object.catalogId);
-      if (catalogItem) object.color = catalogItem.color;
+      if (catalogItem) {
+        object.color = catalogItem.color;
+        object.shape = catalogItem.shape;
+      }
     });
   });
   return project;
