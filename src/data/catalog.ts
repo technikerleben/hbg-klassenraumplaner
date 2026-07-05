@@ -17,17 +17,17 @@ export const CATALOG: CatalogItem[] = [
   { id: 'desk-double-deep', name: 'Doppeltisch tief', category: 'tables', kind: 'furniture', widthCm: 130, depthCm: 55, places: 2, color: '#791D22', description: '130 × 55 cm, zwei Lernplätze' },
   { id: 'desk-single', name: 'Einzeltisch', category: 'tables', kind: 'furniture', widthCm: 70, depthCm: 50, places: 1, color: '#E8C9CB', description: '70 × 50 cm, ein Lernplatz' },
   { id: 'desk-single-deep', name: 'Einzeltisch tief', category: 'tables', kind: 'furniture', widthCm: 70, depthCm: 55, places: 1, color: '#E8C9CB', description: '70 × 55 cm, ein Lernplatz' },
-  { id: 'desk-trapezoid', name: 'Trapeztisch', category: 'tables', kind: 'furniture', widthCm: 140, depthCm: 70, places: 2, color: '#791D22', description: 'Variabel kombinierbarer Trapeztisch' },
+  { id: 'desk-trapezoid', name: 'Trapeztisch', category: 'tables', kind: 'furniture', widthCm: 140, depthCm: 70, places: 2, color: '#791D22', shape: 'trapezoid', description: 'Variabel kombinierbarer Trapeztisch' },
   { id: 'desk-group-square', name: 'Gruppentisch quadratisch', category: 'tables', kind: 'furniture', widthCm: 140, depthCm: 140, places: 4, color: '#E8C9CB', description: '140 × 140 cm, vier Lernplätze' },
-  { id: 'desk-group-round', name: 'Gruppentisch rund', category: 'tables', kind: 'furniture', widthCm: 120, depthCm: 120, places: 4, color: '#E8C9CB', description: 'Ø 120 cm, vier Lernplätze' },
+  { id: 'desk-group-round', name: 'Gruppentisch rund', category: 'tables', kind: 'furniture', widthCm: 120, depthCm: 120, places: 4, color: '#E8C9CB', shape: 'round', description: 'Ø 120 cm, vier Lernplätze' },
   { id: 'teacher-desk', name: 'Lehrertisch', category: 'tables', kind: 'furniture', widthCm: 140, depthCm: 70, color: '#245688', description: '140 × 70 cm' },
   { id: 'lectern', name: 'Lehrerpult', category: 'tables', kind: 'furniture', widthCm: 80, depthCm: 60, color: '#6C93B8', description: 'Kompaktes Pult' },
   { id: 'standing-table', name: 'Stehtisch', category: 'tables', kind: 'furniture', widthCm: 120, depthCm: 60, places: 2, color: '#3F6B4D', description: '120 × 60 cm' },
 
   { id: 'chair', name: 'Schülerstuhl', category: 'seating', kind: 'furniture', widthCm: 45, depthCm: 50, places: 1, color: '#3F6B4D', description: 'Einzelner Lernplatz' },
-  { id: 'stool', name: 'Hocker', category: 'seating', kind: 'furniture', widthCm: 35, depthCm: 35, places: 1, color: '#7C9C82', description: 'Ø 35 cm' },
-  { id: 'bench', name: 'Sitzbank', category: 'seating', kind: 'furniture', widthCm: 120, depthCm: 40, places: 2, color: '#7C9C82', description: '120 × 40 cm' },
-  { id: 'beanbag', name: 'Sitzsack', category: 'seating', kind: 'furniture', widthCm: 80, depthCm: 80, places: 1, color: '#D6E3D2', description: 'Flexible Sitzgelegenheit' },
+  { id: 'stool', name: 'Hocker', category: 'seating', kind: 'furniture', widthCm: 35, depthCm: 35, places: 1, color: '#7C9C82', shape: 'round', description: 'Ø 35 cm' },
+  { id: 'bench', name: 'Sitzbank', category: 'seating', kind: 'furniture', widthCm: 120, depthCm: 40, places: 2, color: '#7C9C82', shape: 'bench', description: '120 × 40 cm' },
+  { id: 'beanbag', name: 'Sitzsack', category: 'seating', kind: 'furniture', widthCm: 80, depthCm: 80, places: 1, color: '#D6E3D2', shape: 'ellipse', description: 'Flexible Sitzgelegenheit' },
   { id: 'floor-cushion', name: 'Bodenkissen', category: 'seating', kind: 'furniture', widthCm: 50, depthCm: 50, places: 1, color: '#D6E3D2', description: '50 × 50 cm' },
 
   { id: 'shelf-low', name: 'Regal niedrig', category: 'storage', kind: 'furniture', widthCm: 100, depthCm: 40, color: '#6C93B8', description: '100 × 40 cm', tall: false },
@@ -45,7 +45,7 @@ export const CATALOG: CatalogItem[] = [
 
   { id: 'room-divider', name: 'Raumteiler', category: 'flexible', kind: 'furniture', widthCm: 120, depthCm: 40, color: '#3F6B4D', description: '120 × 40 cm', tall: true },
   { id: 'learning-island', name: 'Lerninsel', category: 'flexible', kind: 'furniture', widthCm: 160, depthCm: 80, places: 4, color: '#3F6B4D', description: 'Flexible Gruppenfläche' },
-  { id: 'acoustic-sofa', name: 'Akustiksofa', category: 'flexible', kind: 'furniture', widthCm: 140, depthCm: 75, places: 2, color: '#7C9C82', description: 'Zweisitziges Rückzugsmöbel', tall: true },
+  { id: 'acoustic-sofa', name: 'Akustiksofa', category: 'flexible', kind: 'furniture', widthCm: 140, depthCm: 75, places: 2, color: '#7C9C82', shape: 'sofa', description: 'Zweisitziges Rückzugsmöbel', tall: true },
   { id: 'carpet-small', name: 'Teppich 2 × 2 m', category: 'flexible', kind: 'zone', widthCm: 200, depthCm: 200, color: '#CBDBE9', collisionMode: 'ignore', description: 'Markiert eine Präsentations- oder Sitzfläche' },
   { id: 'carpet-large', name: 'Teppich 3 × 2 m', category: 'flexible', kind: 'zone', widthCm: 300, depthCm: 200, color: '#CBDBE9', collisionMode: 'ignore', description: 'Große flexible Lernfläche' },
 
@@ -59,8 +59,8 @@ export const CATALOG: CatalogItem[] = [
   { id: 'wet-zone', name: 'Freie Nasszone', category: 'wet', kind: 'zone', widthCm: 200, depthCm: 120, color: '#CBDBE9', collisionMode: 'warning', description: 'Markiert einen Spritzwasser- oder Experimentierbereich' },
 
   { id: 'wheelchair-place', name: 'Rollstuhlplatz', category: 'other', kind: 'zone', widthCm: 150, depthCm: 150, color: '#3F6B4D', collisionMode: 'warning', description: 'Optionale Bewegungsfläche 150 × 150 cm' },
-  { id: 'plant', name: 'Pflanze', category: 'other', kind: 'furniture', widthCm: 45, depthCm: 45, color: '#2F4A38', description: 'Dekoratives Hindernis' },
-  { id: 'waste-bin', name: 'Papierkorb', category: 'other', kind: 'furniture', widthCm: 35, depthCm: 35, color: '#6C93B8', description: '35 × 35 cm' },
+  { id: 'plant', name: 'Pflanze', category: 'other', kind: 'furniture', widthCm: 45, depthCm: 45, color: '#2F4A38', shape: 'round', description: 'Dekoratives Hindernis' },
+  { id: 'waste-bin', name: 'Papierkorb', category: 'other', kind: 'furniture', widthCm: 35, depthCm: 35, color: '#6C93B8', shape: 'round', description: '35 × 35 cm' },
   { id: 'note', name: 'Notizfeld', category: 'other', kind: 'symbol', widthCm: 100, depthCm: 50, color: '#F8EEEE', collisionMode: 'ignore', description: 'Freie Beschriftung im Plan' }
 ];
 
@@ -81,6 +81,7 @@ export function createObjectFromCatalog(
     kind: item.kind,
     category: item.category,
     name: item.name,
+    shape: item.shape,
     xCm,
     yCm,
     widthCm: item.widthCm,
