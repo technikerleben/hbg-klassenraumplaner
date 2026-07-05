@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import Konva from 'konva';
 import { Toolbar } from './components/Toolbar';
 import { CatalogPanel } from './components/CatalogPanel';
@@ -14,6 +14,8 @@ import { usePlannerStore } from './store/usePlannerStore';
 import { storageGet, storageRemove, storageSet } from './lib/storage';
 import { analyzeVariant } from './lib/analysis';
 import './styles.css';
+
+const ThreeDView = lazy(() => import('./components/ThreeDView').then((module) => ({ default: module.ThreeDView })));
 
 const STORAGE_KEY = 'klassenraumplaner-project-v1';
 
@@ -127,8 +129,8 @@ export default function App() {
   const exportProject = () => downloadBlob(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), `${safeFilename(project.meta.title)}.klassenraum.json`);
 
   const capturePlan = async (mimeType: 'image/png' | 'image/jpeg' = 'image/png') => {
-    if (mode === 'compare') {
-      alert('Öffne zuerst eine Variante, um ihren Plan zu exportieren.');
+    if (mode === 'compare' || mode === '3d') {
+      alert('Wechsle für den Planexport zuerst in die 2D-Ansicht einer Variante.');
       return null;
     }
     const stage = stageRef.current;
@@ -304,11 +306,11 @@ export default function App() {
       try { importProject(JSON.parse(await file.text())); } catch (error) { alert(error instanceof Error ? error.message : 'Die Projektdatei konnte nicht geöffnet werden.'); }
       e.currentTarget.value = '';
     }} />
-    <div className="workspace">
+    {mode === '3d' ? <div className="workspace workspace-3d"><Suspense fallback={<div className="three-d-loading">3D-Ansicht wird geladen …</div>}><ThreeDView /></Suspense></div> : <div className="workspace">
       {leftPanel}
       {mode === 'compare' ? <CompareView /> : <CanvasEditor stageRef={stageRef} />}
       {mode === 'compare' ? <aside className="right-panel compare-help"><h2>Vergleich</h2><p>Öffne eine Variante über „Diese Variante bearbeiten“. Du kannst neue Varianten leer anlegen oder die aktive Einrichtung kopieren.</p><h3>Projektziel</h3><label className="field"><span>Schülerzahl</span><input type="number" min={1} max={60} value={project.meta.targetStudentCount} onChange={(e) => usePlannerStore.getState().updateMeta({ targetStudentCount: Number(e.target.value) })} /></label></aside> : <PropertiesPanel />}
-    </div>
+    </div>}
     <StatusBar />
   </div>;
 }
