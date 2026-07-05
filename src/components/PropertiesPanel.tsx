@@ -66,7 +66,8 @@ export function PropertiesPanel() {
       {object.catalogId === 'door' && <>
         <h3>Tür</h3>
         <label className="segmented-label"><span>Türanschlag</span><div className="segmented"><button className={object.properties?.hinge !== 'right' ? 'active' : ''} onClick={() => updateObject(object.id, { properties: { hinge: 'left' } })}>links</button><button className={object.properties?.hinge === 'right' ? 'active' : ''} onClick={() => updateObject(object.id, { properties: { hinge: 'right' } })}>rechts</button></div></label>
-        <p className="inline-note">Die Tür öffnet in der Planung immer nach innen.</p>
+        <label className="field"><span>Öffnungswinkel</span><div><input type="number" min={30} max={120} step={5} value={object.properties?.openingAngleDeg ?? 90} onChange={(e) => updateObject(object.id, { properties: { openingAngleDeg: Math.max(30, Math.min(120, Number(e.target.value))) } })} /><em>°</em></div></label>
+        <p className="inline-note">Die Tür öffnet in der Planung immer nach innen. Der Winkel wird auch bei der Schwenkbereichsprüfung berücksichtigt.</p>
       </>}
 
       {(object.catalogId === 'digital-board' || object.catalogId === 'wall-board') && <label className="check-row prominent"><input type="checkbox" checked={Boolean(object.properties?.mainBoard)} onChange={() => setMainBoard(object.id)} /><span>Als Haupttafel verwenden</span></label>}
