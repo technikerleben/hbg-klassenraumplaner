@@ -16,7 +16,7 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousRootDisplay = root?.style.display ?? '';
-    const previousAriaHidden = root?.getAttribute('aria-hidden');
+    const previousAriaHidden = root ? root.getAttribute('aria-hidden') : null;
     const previousInert = root?.inert ?? false;
 
     document.body.classList.add('room-survey-open');
