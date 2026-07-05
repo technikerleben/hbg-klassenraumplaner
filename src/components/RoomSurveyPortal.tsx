@@ -15,7 +15,8 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
     const root = document.getElementById('root');
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousRootDisplay = root?.style.display ?? '';
+    const previousRootVisibility = root?.style.visibility ?? '';
+    const previousRootPointerEvents = root?.style.pointerEvents ?? '';
     const previousAriaHidden = root ? root.getAttribute('aria-hidden') : null;
     const previousInert = root?.inert ?? false;
 
@@ -24,7 +25,8 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
     document.documentElement.style.overflow = 'hidden';
 
     if (root) {
-      root.style.display = 'none';
+      root.style.visibility = 'hidden';
+      root.style.pointerEvents = 'none';
       root.setAttribute('aria-hidden', 'true');
       root.inert = true;
     }
@@ -45,7 +47,8 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
       document.documentElement.style.overflow = previousHtmlOverflow;
 
       if (root) {
-        root.style.display = previousRootDisplay;
+        root.style.visibility = previousRootVisibility;
+        root.style.pointerEvents = previousRootPointerEvents;
         root.inert = previousInert;
         if (previousAriaHidden === null) root.removeAttribute('aria-hidden');
         else root.setAttribute('aria-hidden', previousAriaHidden);
