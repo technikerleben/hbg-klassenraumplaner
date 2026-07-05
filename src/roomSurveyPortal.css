@@ -1,0 +1,15 @@
+.survey-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  isolation: isolate;
+}
+
+.survey-dialog {
+  position: relative;
+  z-index: 1;
+}
