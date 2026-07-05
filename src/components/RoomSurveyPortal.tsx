@@ -29,6 +29,11 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
       root.inert = true;
     }
 
+    const roomNameInput = document.querySelector<HTMLInputElement>(
+      '.room-survey-portal-layer input[placeholder="z. B. B 2.14 oder Technikraum"]',
+    );
+    if (roomNameInput) roomNameInput.placeholder = 'z. B. A201 oder C105';
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
