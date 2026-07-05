@@ -5,10 +5,10 @@ Eine maßstäbliche 2D-Webapp zur Planung rechteckiger Klassenräume. Die Anwend
 ## Funktionen
 
 - Raummaße in Zentimetern festlegen
-- Türen mit veränderbarem Anschlag und Schwenkbereich
+- Türen mit veränderbarem Anschlag, Öffnungswinkel und geprüftem Schwenkbereich
 - Fenster, Heizkörper, digitale Tafeln, Wandtafeln und Nassbereiche
-- Möbelkatalog mit realistischen festen Maßen
-- Drag-and-drop, Touchbedienung, Drehen, Sperren, Duplizieren und Löschen
+- Möbelkatalog mit realistischen festen Maßen und formgetreuen Trapez-, Rund-, Bank- und Sofadarstellungen
+- Drag-and-drop, Touchbedienung, Objektfang, Pfeiltasten-Feinjustierung, Drehen, Sperren, Duplizieren und Löschen
 - zwölf automatische Sitzordnungen für eine vorgegebene Schülerzahl
 - Kollisionen, Türbereiche, Lernplätze, Heizkörperzonen, Tafelwinkel und Laufwege prüfen
 - Varianten anlegen, kopieren und vergleichen
@@ -17,6 +17,17 @@ Eine maßstäbliche 2D-Webapp zur Planung rechteckiger Klassenräume. Die Anwend
 - PNG-, JPG-, A4-/A3-PDF- und Druckausgabe
 - PWA-Unterstützung für die Offline-Nutzung nach dem ersten Laden
 
+## Neu in Version 1.2
+
+- Trapeztische werden als echte Trapeze dargestellt und als Polygon geprüft.
+- Sitzsäcke, Sitzbänke und Akustiksofas haben eigene Draufsichten.
+- Alte Projektdateien erhalten die neuen Möbelgeometrien automatisch beim Laden.
+- Türöffnungswinkel zwischen 30° und 120° sind einstellbar und Teil der Schwenkbereichsanalyse.
+- Gedrehte Möbel werden anhand ihrer tatsächlichen Eckpunkte im Raum gehalten.
+- Möbel rasten an Kanten und Mittellinien anderer Objekte ein.
+- Pfeiltasten verschieben ausgewählte Möbel um 1 cm, mit Umschalt um 10 cm.
+- Wandobjekte zeigen beim Einfügen einen Hinweis auf die automatische Sperre.
+- Schlossmarkierung und Maßstabsleiste sind deutlicher sichtbar.
 
 ## HBG Corporate Design
 
@@ -26,7 +37,7 @@ Da keine offizielle Logo-Bilddatei vorlag, nutzt der Kopfbereich einen deutlich 
 
 ## Lokal starten
 
-Voraussetzung: Node.js 20 oder neuer.
+Voraussetzung: Node.js 22.x.
 
 ```bash
 npm install
@@ -50,14 +61,15 @@ Der fertige Build liegt im Ordner `dist`.
 npm test
 ```
 
-Die Tests prüfen derzeit Geometrie, Kollisionen, Türschwenkbereiche, Lernplatzzählung und Sitzordnungsvorlagen.
+Die Tests prüfen Geometrie, Möbelpolygone, Objektfang, gedrehte Randbegrenzung, Türschwenkbereiche, Lernplatzzählung und Sitzordnungsvorlagen.
 
 ## Deployment mit Vercel
 
-1. Den Projektordner in ein GitHub-Repository übertragen.
-2. Das Repository in Vercel importieren.
-3. Vercel erkennt Vite automatisch. Alternativ sind Build-Befehl und Ausgabeordner bereits in `vercel.json` eingetragen.
-4. Deployment starten.
+1. Das Repository in Vercel importieren.
+2. Vercel erkennt Vite automatisch und installiert die Abhängigkeiten aus `package.json`.
+3. Build-Befehl und Ausgabeordner sind in `vercel.json` eingetragen.
+4. In den Vercel-Projekteinstellungen Node.js 22.x verwenden.
+5. Deployment starten.
 
 Es werden keine Umgebungsvariablen und kein Backend benötigt.
 
