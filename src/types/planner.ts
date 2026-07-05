@@ -1,6 +1,7 @@
 export type ObjectKind = 'furniture' | 'wall' | 'zone' | 'symbol';
 export type WallSide = 'north' | 'east' | 'south' | 'west';
 export type Severity = 'critical' | 'warning' | 'info';
+export type ObjectShape = 'rect' | 'round' | 'ellipse' | 'trapezoid' | 'bench' | 'sofa';
 export type Category = 'tables' | 'seating' | 'storage' | 'presentation' | 'flexible' | 'fixed' | 'wet' | 'other';
 
 export interface RoomGeometry {
@@ -14,6 +15,7 @@ export interface PlannerObject {
   kind: ObjectKind;
   category: Category;
   name: string;
+  shape?: ObjectShape;
   xCm: number;
   yCm: number;
   widthCm: number;
@@ -96,6 +98,7 @@ export interface CatalogItem {
   depthCm: number;
   places?: number;
   color: string;
+  shape?: ObjectShape;
   collisionMode?: 'solid' | 'warning' | 'ignore';
   wallBound?: boolean;
   tall?: boolean;
