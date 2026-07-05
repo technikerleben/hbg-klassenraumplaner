@@ -1,6 +1,7 @@
-import type { PlannerObject, RoomGeometry, WallSide } from '../types/planner';
+import type { ObjectShape, PlannerObject, RoomGeometry, WallSide } from '../types/planner';
 
 export interface Point { x: number; y: number }
+export interface ObjectSnapResult { xCm: number; yCm: number; snappedX: boolean; snappedY: boolean }
 
 export const degToRad = (deg: number) => (deg * Math.PI) / 180;
 export const normalizeAngle = (deg: number) => ((deg % 360) + 360) % 360;
@@ -15,16 +16,63 @@ export function rotatePoint(point: Point, center: Point, angleDeg: number): Poin
   return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
 }
 
-export function objectCorners(object: PlannerObject, inflate = 0): Point[] {
+export function resolveObjectShape(object: PlannerObject): ObjectShape {
+  if (object.shape) return object.shape;
+  if (object.catalogId === 'desk-trapezoid') return 'trapezoid';
+  if (['desk-group-round', 'stool', 'plant', 'waste-bin'].includes(object.catalogId)) return 'round';
+  if (object.catalogId === 'beanbag') return 'ellipse';
+  if (object.catalogId === 'bench') return 'bench';
+  if (object.catalogId === 'acoustic-sofa') return 'sofa';
+  return 'rect';
+}
+
+export function trapezoidPoints(widthCm: number, depthCm: number): number[] {
+  const halfW = widthCm / 2;
+  const halfD = depthCm / 2;
+  const shortHalf = widthCm / 4;
+  return [
+    -halfW, halfD,
+    halfW, halfD,
+    shortHalf, -halfD,
+    -shortHalf, -halfD,
+  ];
+}
+
+function localPolygon(object: PlannerObject, inflate = 0): Point[] {
   const halfW = object.widthCm / 2 + inflate;
   const halfH = object.depthCm / 2 + inflate;
-  const c = { x: object.xCm, y: object.yCm };
+  if (resolveObjectShape(object) === 'trapezoid') {
+    const shortHalf = object.widthCm / 4 + inflate;
+    return [
+      { x: -halfW, y: halfH },
+      { x: halfW, y: halfH },
+      { x: shortHalf, y: -halfH },
+      { x: -shortHalf, y: -halfH },
+    ];
+  }
   return [
-    { x: c.x - halfW, y: c.y - halfH },
-    { x: c.x + halfW, y: c.y - halfH },
-    { x: c.x + halfW, y: c.y + halfH },
-    { x: c.x - halfW, y: c.y + halfH },
-  ].map((p) => rotatePoint(p, c, object.rotationDeg));
+    { x: -halfW, y: -halfH },
+    { x: halfW, y: -halfH },
+    { x: halfW, y: halfH },
+    { x: -halfW, y: halfH },
+  ];
+}
+
+export function objectCorners(object: PlannerObject, inflate = 0): Point[] {
+  const center = { x: object.xCm, y: object.yCm };
+  return localPolygon(object, inflate)
+    .map((point) => ({ x: point.x + center.x, y: point.y + center.y }))
+    .map((point) => rotatePoint(point, center, object.rotationDeg));
+}
+
+export function objectBounds(object: PlannerObject) {
+  const points = objectCorners(object);
+  return {
+    minX: Math.min(...points.map((p) => p.x)),
+    maxX: Math.max(...points.map((p) => p.x)),
+    minY: Math.min(...points.map((p) => p.y)),
+    maxY: Math.max(...points.map((p) => p.y)),
+  };
 }
 
 function axesFor(poly: Point[]): Point[] {
@@ -60,11 +108,68 @@ export function objectInsideRoom(object: PlannerObject, room: RoomGeometry) {
 }
 
 export function clampObjectToRoom(object: PlannerObject, room: RoomGeometry): Pick<PlannerObject, 'xCm' | 'yCm'> {
-  const halfW = object.widthCm / 2;
-  const halfH = object.depthCm / 2;
+  const points = objectCorners(object);
+  const offsetsX = points.map((p) => p.x - object.xCm);
+  const offsetsY = points.map((p) => p.y - object.yCm);
+  const minOffsetX = Math.min(...offsetsX);
+  const maxOffsetX = Math.max(...offsetsX);
+  const minOffsetY = Math.min(...offsetsY);
+  const maxOffsetY = Math.max(...offsetsY);
+  const minCenterX = -minOffsetX;
+  const maxCenterX = room.widthCm - maxOffsetX;
+  const minCenterY = -minOffsetY;
+  const maxCenterY = room.lengthCm - maxOffsetY;
   return {
-    xCm: Math.max(halfW, Math.min(room.widthCm - halfW, object.xCm)),
-    yCm: Math.max(halfH, Math.min(room.lengthCm - halfH, object.yCm)),
+    xCm: minCenterX > maxCenterX ? room.widthCm / 2 : Math.max(minCenterX, Math.min(maxCenterX, object.xCm)),
+    yCm: minCenterY > maxCenterY ? room.lengthCm / 2 : Math.max(minCenterY, Math.min(maxCenterY, object.yCm)),
+  };
+}
+
+function bestSnapDelta(candidates: number[], threshold: number) {
+  const eligible = candidates.filter((value) => Math.abs(value) <= threshold);
+  if (!eligible.length) return undefined;
+  return eligible.reduce((best, value) => Math.abs(value) < Math.abs(best) ? value : best);
+}
+
+export function snapObjectToObjects(
+  moving: PlannerObject,
+  others: PlannerObject[],
+  thresholdCm = 8,
+): ObjectSnapResult {
+  const movingBounds = objectBounds(moving);
+  const movingCenterX = (movingBounds.minX + movingBounds.maxX) / 2;
+  const movingCenterY = (movingBounds.minY + movingBounds.maxY) / 2;
+  const xCandidates: number[] = [];
+  const yCandidates: number[] = [];
+
+  for (const other of others) {
+    if (other.id === moving.id || other.kind === 'zone' || other.kind === 'symbol') continue;
+    const bounds = objectBounds(other);
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+    xCandidates.push(
+      bounds.minX - movingBounds.minX,
+      bounds.maxX - movingBounds.maxX,
+      bounds.minX - movingBounds.maxX,
+      bounds.maxX - movingBounds.minX,
+      centerX - movingCenterX,
+    );
+    yCandidates.push(
+      bounds.minY - movingBounds.minY,
+      bounds.maxY - movingBounds.maxY,
+      bounds.minY - movingBounds.maxY,
+      bounds.maxY - movingBounds.minY,
+      centerY - movingCenterY,
+    );
+  }
+
+  const deltaX = bestSnapDelta(xCandidates, thresholdCm);
+  const deltaY = bestSnapDelta(yCandidates, thresholdCm);
+  return {
+    xCm: moving.xCm + (deltaX ?? 0),
+    yCm: moving.yCm + (deltaY ?? 0),
+    snappedX: deltaX !== undefined,
+    snappedY: deltaY !== undefined,
   };
 }
 
@@ -97,9 +202,12 @@ export function pointInDoorSwing(point: Point, door: PlannerObject, room: RoomGe
   const hingeX = doorCenter.x + (hingeLeft ? -half : half);
   const dx = local.x - hingeX;
   const dy = local.y - doorCenter.y;
-  const inward = dy >= 0 && dy <= door.widthCm;
-  const horizontal = hingeLeft ? dx >= 0 : dx <= 0;
-  return inward && horizontal && Math.hypot(dx, dy) <= door.widthCm;
+  if (dy < 0 || Math.hypot(dx, dy) > door.widthCm) return false;
+  const openingAngle = Math.max(0, Math.min(180, door.properties?.openingAngleDeg ?? 90));
+  const angleFromClosed = hingeLeft
+    ? normalizeAngle((Math.atan2(dy, dx) * 180) / Math.PI)
+    : normalizeAngle((Math.atan2(dy, -dx) * 180) / Math.PI);
+  return angleFromClosed <= openingAngle + 0.001;
 }
 
 export function objectHitsDoorSwing(object: PlannerObject, door: PlannerObject, room: RoomGeometry) {
