@@ -34,7 +34,7 @@ export function RoomPanel() {
         <button className="primary full" onClick={() => setAssistantOpen(true)}>Raum-Assistent starten</button>
       </section>
 
-      <label className="field room-name-field"><span>Raumname</span><input value={project.meta.roomLabel} onChange={(event) => updateMeta({ roomLabel: event.target.value })} placeholder="z. B. B 2.14" /></label>
+      <label className="field room-name-field"><span>Raumname</span><input value={project.meta.roomLabel} onChange={(event) => updateMeta({ roomLabel: event.target.value })} placeholder="z. B. A201 oder C105" /></label>
       <div className="room-dimensions">
         <label className="field"><span>Breite</span><div><input type="number" min={300} max={3000} value={width} onChange={(e) => setWidth(Number(e.target.value))} /><em>cm</em></div></label>
         <label className="field"><span>Länge</span><div><input type="number" min={300} max={3000} value={length} onChange={(e) => setLength(Number(e.target.value))} /><em>cm</em></div></label>

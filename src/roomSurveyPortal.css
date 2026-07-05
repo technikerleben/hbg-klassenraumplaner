@@ -1,15 +1,32 @@
-.survey-backdrop {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483646 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
-  isolation: isolate;
+body.room-survey-open {
+  overflow: hidden !important;
 }
 
-.survey-dialog {
+.room-survey-portal-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  display: grid !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+  background: rgba(22,58,92,.58);
+}
+
+.room-survey-portal-layer .survey-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  pointer-events: auto !important;
+}
+
+.room-survey-portal-layer .survey-dialog {
   position: relative;
   z-index: 1;
+  pointer-events: auto;
 }

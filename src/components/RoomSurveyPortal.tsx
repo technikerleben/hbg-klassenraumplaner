@@ -13,13 +13,26 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
     if (!open) return;
 
     const root = document.getElementById('root');
-    const previousOverflow = document.body.style.overflow;
-    const previousAriaHidden = root?.getAttribute('aria-hidden');
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousRootDisplay = root?.style.display ?? '';
+    const previousAriaHidden = root ? root.getAttribute('aria-hidden') : null;
     const previousInert = root?.inert ?? false;
 
+    document.body.classList.add('room-survey-open');
     document.body.style.overflow = 'hidden';
-    root?.setAttribute('aria-hidden', 'true');
-    if (root) root.inert = true;
+    document.documentElement.style.overflow = 'hidden';
+
+    if (root) {
+      root.style.display = 'none';
+      root.setAttribute('aria-hidden', 'true');
+      root.inert = true;
+    }
+
+    const roomNameInput = document.querySelector<HTMLInputElement>(
+      '.room-survey-portal-layer input[placeholder="z. B. B 2.14 oder Technikraum"]',
+    );
+    if (roomNameInput) roomNameInput.placeholder = 'z. B. A201 oder C105';
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -27,12 +40,17 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
     window.addEventListener('keydown', closeOnEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.classList.remove('room-survey-open');
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+
       if (root) {
+        root.style.display = previousRootDisplay;
         root.inert = previousInert;
         if (previousAriaHidden === null) root.removeAttribute('aria-hidden');
         else root.setAttribute('aria-hidden', previousAriaHidden);
       }
+
       window.removeEventListener('keydown', closeOnEscape);
     };
   }, [open, onClose]);
@@ -40,7 +58,9 @@ export function RoomSurveyAssistant({ open, onClose }: RoomSurveyAssistantProps)
   if (!open) return null;
 
   return createPortal(
-    <RoomSurveyAssistantContent open={open} onClose={onClose} />,
+    <div className="room-survey-portal-layer">
+      <RoomSurveyAssistantContent open={open} onClose={onClose} />
+    </div>,
     document.body,
   );
 }
