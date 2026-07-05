@@ -1,6 +1,6 @@
 import {
   Accessibility, AlertTriangle, Download, FileDown, FileImage, FolderOpen, Grid3X3,
-  LayoutTemplate, Lock, Plus, Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut,
+  Box, LayoutTemplate, Lock, Plus, Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import type { AppMode } from '../store/usePlannerStore';
 import { usePlannerStore } from '../store/usePlannerStore';
@@ -20,6 +20,7 @@ const modes: Array<{ id: AppMode; label: string; icon: typeof Grid3X3 }> = [
   { id: 'templates', label: 'Vorlagen', icon: LayoutTemplate },
   { id: 'analysis', label: 'Prüfen', icon: AlertTriangle },
   { id: 'compare', label: 'Varianten', icon: Accessibility },
+  { id: '3d', label: '3D', icon: Box },
 ];
 
 export function Toolbar({ onExportPng, onExportJpg, onExportPdf, onPrint, onExportProject, onImportProject }: ToolbarProps) {
