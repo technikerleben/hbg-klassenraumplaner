@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createObjectFromCatalog, getCatalogItem, wallPlacement } from '../data/catalog';
-import { clampObjectToRoom, nearestWall, snap } from '../lib/geometry';
+import { clampObjectToRoom, nearestWall, snap, snapObjectToObjects } from '../lib/geometry';
 import { createDefaultProject, createDefaultVariant, sanitizeProject } from '../lib/project';
 import { generateTemplate } from '../lib/templates';
 import type { PlannerObject, PlannerZone, ProjectFile, RoomVariant, WallSide } from '../types/planner';
@@ -23,6 +23,7 @@ interface PlannerState {
   history: Snapshot[];
   future: Snapshot[];
   lastSavedAt?: string;
+  notice?: string;
   activeVariant: () => RoomVariant;
   setMode: (mode: AppMode) => void;
   setSelected: (ids: string[]) => void;
@@ -37,6 +38,7 @@ interface PlannerState {
   addObjectAt: (catalogId: string, xCm: number, yCm: number) => void;
   updateObject: (id: string, patch: Partial<PlannerObject>, commit?: boolean) => void;
   moveObject: (id: string, xCm: number, yCm: number, commit?: boolean) => void;
+  nudgeSelected: (dxCm: number, dyCm: number) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
   rotateSelected: (degrees?: number) => void;
@@ -55,6 +57,7 @@ interface PlannerState {
   newProject: () => void;
   importProject: (input: unknown) => void;
   markSaved: () => void;
+  clearNotice: () => void;
 }
 
 const deepClone = <T,>(value: T): T => structuredClone(value);
@@ -92,6 +95,7 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
     zoom: 1,
     history: [],
     future: [],
+    notice: undefined,
     activeVariant: () => active(get().project),
     setMode: (mode) => set({ mode }),
     setSelected: (selectedIds) => set({ selectedIds }),
@@ -122,7 +126,7 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
       }
       const next = withVariant(get().project, (v) => { v.objects.push(object); });
       commitProject(next);
-      set({ selectedIds: [object.id] });
+      set({ selectedIds: [object.id], notice: item.wallBound ? 'An der Wand eingerastet und gesperrt – zum Verschieben zuerst entsperren.' : undefined });
     },
     addObjectAt: (catalogId, xCm, yCm) => {
       const item = getCatalogItem(catalogId);
@@ -134,13 +138,15 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
         : createObjectFromCatalog(catalogId, xCm, yCm);
       const next = withVariant(get().project, (v) => { v.objects.push(object); });
       commitProject(next);
-      set({ selectedIds: [object.id] });
+      set({ selectedIds: [object.id], notice: item.wallBound ? 'An der Wand eingerastet und gesperrt – zum Verschieben zuerst entsperren.' : undefined });
     },
     updateObject: (id, patch, commit = true) => {
       const next = withVariant(get().project, (variant) => {
         const index = variant.objects.findIndex((o) => o.id === id);
         if (index < 0) return;
-        variant.objects[index] = { ...variant.objects[index], ...patch, properties: patch.properties ? { ...variant.objects[index].properties, ...patch.properties } : variant.objects[index].properties };
+        const updated = { ...variant.objects[index], ...patch, properties: patch.properties ? { ...variant.objects[index].properties, ...patch.properties } : variant.objects[index].properties };
+        if (!updated.wall) Object.assign(updated, clampObjectToRoom(updated, variant.room));
+        variant.objects[index] = updated;
       });
       if (commit) commitProject(next); else set({ project: next });
     },
@@ -152,9 +158,25 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
         if (!object || object.locked) return;
         object.xCm = snap(xCm, step);
         object.yCm = snap(yCm, step);
+        const objectSnap = snapObjectToObjects(object, variant.objects.filter((other) => other.id !== id), Math.max(6, step));
+        object.xCm = objectSnap.xCm;
+        object.yCm = objectSnap.yCm;
         Object.assign(object, clampObjectToRoom(object, variant.room));
       });
       if (commit) commitProject(next); else set({ project: next });
+    },
+    nudgeSelected: (dxCm, dyCm) => {
+      const ids = new Set(get().selectedIds);
+      if (!ids.size) return;
+      const next = withVariant(get().project, (variant) => {
+        variant.objects.forEach((object) => {
+          if (!ids.has(object.id) || object.locked || object.kind === 'wall') return;
+          object.xCm += dxCm;
+          object.yCm += dyCm;
+          Object.assign(object, clampObjectToRoom(object, variant.room));
+        });
+      });
+      commitProject(next);
     },
     deleteSelected: () => {
       const ids = new Set(get().selectedIds);
@@ -180,7 +202,11 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
     rotateSelected: (degrees = 90) => {
       const ids = new Set(get().selectedIds);
       const next = withVariant(get().project, (variant) => {
-        variant.objects.forEach((o) => { if (ids.has(o.id) && !o.locked && o.kind !== 'wall') o.rotationDeg = (o.rotationDeg + degrees) % 360; });
+        variant.objects.forEach((o) => {
+          if (!ids.has(o.id) || o.locked || o.kind === 'wall') return;
+          o.rotationDeg = (o.rotationDeg + degrees) % 360;
+          Object.assign(o, clampObjectToRoom(o, variant.room));
+        });
       });
       commitProject(next);
     },
@@ -291,5 +317,6 @@ export const usePlannerStore = create<PlannerState>((set, get) => {
     newProject: () => set({ project: createDefaultProject(), selectedIds: [], history: [], future: [] }),
     importProject: (input) => set({ project: sanitizeProject(input), selectedIds: [], history: [], future: [] }),
     markSaved: () => set({ lastSavedAt: new Date().toISOString() }),
+    clearNotice: () => set({ notice: undefined }),
   };
 });
