@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createObjectFromCatalog, wallPlacement } from '../data/catalog';
-import { objectHitsDoorSwing, objectInsideRoom, objectsIntersect, snap } from '../lib/geometry';
+import { clampObjectToRoom, objectHitsDoorSwing, objectInsideRoom, objectsIntersect, resolveObjectShape, snap, snapObjectToObjects, trapezoidPoints } from '../lib/geometry';
 
 describe('Geometrie', () => {
   it('rastet Werte zuverlässig ein', () => {
@@ -33,5 +33,27 @@ describe('Geometrie', () => {
     expect(objectHitsDoorSwing(desk, door, room)).toBe(true);
     desk.xCm = 500;
     expect(objectHitsDoorSwing(desk, door, room)).toBe(false);
+  });
+
+  it('nutzt das Formfeld für Trapeztische und berechnet Trapezpunkte', () => {
+    const trapezoid = createObjectFromCatalog('desk-trapezoid', 200, 200);
+    expect(resolveObjectShape(trapezoid)).toBe('trapezoid');
+    expect(trapezoid.shape).toBe('trapezoid');
+    expect(trapezoidPoints(140, 70)).toEqual([-70, 35, 70, 35, 35, -35, -35, -35]);
+  });
+
+  it('klemmt gedrehte Möbel mit rotierter Bounding-Box in den Raum', () => {
+    const room = { widthCm: 900, lengthCm: 700 };
+    const desk = createObjectFromCatalog('desk-double', 40, 40, { rotationDeg: 45 });
+    Object.assign(desk, clampObjectToRoom(desk, room));
+    expect(objectInsideRoom(desk, room)).toBe(true);
+  });
+
+  it('rastet bewegte Möbel an Kanten anderer Objekte ein', () => {
+    const fixed = createObjectFromCatalog('desk-double', 200, 200);
+    const moving = createObjectFromCatalog('desk-double', 331, 200);
+    const snapped = snapObjectToObjects(moving, [fixed], 8);
+    expect(snapped.snappedX).toBe(true);
+    expect(snapped.xCm).toBe(330);
   });
 });
