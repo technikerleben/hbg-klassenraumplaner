@@ -88,10 +88,13 @@ function groupLayout(target: number, ctx: LayoutContext, size: 4 | 6) {
     const cx = (ctx.lateral - totalW) / 2 + groupW / 2 + col * (groupW + gapX);
     const cy = 220 + groupH / 2 + row * (groupH + gapY);
     if (size === 4) {
-      objects.push(make('desk-double', ctx, cx, cy - 27, 0));
-      objects.push(make('desk-double', ctx, cx, cy + 27, 180));
+      // Die angehängten Stühle liegen an der lokalen Unterseite des Tisches.
+      // Deshalb zeigt der obere Tisch mit 180° nach außen, der untere mit 0°.
+      objects.push(make('desk-double', ctx, cx, cy - 27, 180));
+      objects.push(make('desk-double', ctx, cx, cy + 27, 0));
     } else {
-      objects.push(make('desk-double', ctx, cx, cy - 55, 0));
+      // Bei der Sechserinsel zeigen alle drei Sitzseiten vom Inselzentrum weg.
+      objects.push(make('desk-double', ctx, cx, cy - 55, 180));
       objects.push(make('desk-double', ctx, cx - 65, cy + 25, 90));
       objects.push(make('desk-double', ctx, cx + 65, cy + 25, -90));
     }
