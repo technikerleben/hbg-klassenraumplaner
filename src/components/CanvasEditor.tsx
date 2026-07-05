@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactElement } from 'react';
 import Konva from 'konva';
-import { Circle, Group, Layer, Line, Rect, Stage, Text } from 'react-konva';
+import { Circle, Ellipse, Group, Layer, Line, Rect, Stage, Text } from 'react-konva';
 import { analyzeVariant } from '../lib/analysis';
-import { nearestWall } from '../lib/geometry';
+import { nearestWall, resolveObjectShape, trapezoidPoints } from '../lib/geometry';
 import { wallPlacement } from '../data/catalog';
 import { usePlannerStore } from '../store/usePlannerStore';
 import type { PlannerObject, PlannerWarning } from '../types/planner';
@@ -47,14 +47,30 @@ function warningMap(warnings: PlannerWarning[]) {
   return map;
 }
 
-function arcPoints(hingeLeft: boolean, width: number) {
+function arcPoints(hingeLeft: boolean, width: number, openingAngleDeg: number) {
   const points: number[] = [];
-  for (let i = 0; i <= 16; i += 1) {
-    const t = i / 16;
-    const angle = hingeLeft ? t * Math.PI / 2 : Math.PI - t * Math.PI / 2;
+  const opening = Math.max(0, Math.min(180, openingAngleDeg)) * Math.PI / 180;
+  for (let i = 0; i <= 20; i += 1) {
+    const t = i / 20;
+    const angle = hingeLeft ? t * opening : Math.PI - t * opening;
     points.push(Math.cos(angle) * width, Math.sin(angle) * width);
   }
   return points;
+}
+
+function doorLeafEnd(hingeLeft: boolean, width: number, openingAngleDeg: number) {
+  const opening = Math.max(0, Math.min(180, openingAngleDeg)) * Math.PI / 180;
+  const angle = hingeLeft ? opening : Math.PI - opening;
+  return { x: Math.cos(angle) * width, y: Math.sin(angle) * width };
+}
+
+function LockMarker({ object, inverseScale }: { object: PlannerObject; inverseScale: number }) {
+  const x = object.widthCm / 2 - 12 * inverseScale;
+  const y = -object.depthCm / 2 + 5 * inverseScale;
+  return <Group x={x} y={y} listening={false}>
+    <Rect x={-6 * inverseScale} y={0} width={12 * inverseScale} height={9 * inverseScale} cornerRadius={2 * inverseScale} fill="#FFFFFF" stroke="#163A5C" strokeWidth={1.5 * inverseScale} />
+    <Line points={[-4 * inverseScale, 0, -4 * inverseScale, -3 * inverseScale, 0, -6 * inverseScale, 4 * inverseScale, -3 * inverseScale, 4 * inverseScale, 0]} stroke="#163A5C" strokeWidth={1.5 * inverseScale} lineCap="round" lineJoin="round" />
+  </Group>;
 }
 
 function AttachedSeats({ object, inverseScale }: { object: PlannerObject; inverseScale: number }) {
@@ -79,7 +95,11 @@ function ObjectShape({ object, selected, severity, inverseScale, mode, room, onS
 }) {
   const draggable = !object.locked || mode === 'room';
   const warningColor = severity === 'critical' ? '#A62B2B' : severity === 'warning' ? '#B8791E' : severity === 'info' ? '#245688' : undefined;
-  const round = ['desk-group-round', 'stool', 'plant', 'waste-bin'].includes(object.catalogId);
+  const shape = resolveObjectShape(object);
+  const openingAngle = object.properties?.openingAngleDeg ?? 90;
+  const hingeLeft = object.properties?.hinge !== 'right';
+  const hingeX = hingeLeft ? -object.widthCm / 2 : object.widthCm / 2;
+  const leafEnd = doorLeafEnd(hingeLeft, object.widthCm, openingAngle);
   const label = object.catalogId === 'note' ? object.properties?.label ?? object.name : object.name;
 
   return <Group
@@ -95,17 +115,22 @@ function ObjectShape({ object, selected, severity, inverseScale, mode, room, onS
   >
     {object.catalogId === 'door' ? <>
       <Line points={[-object.widthCm / 2, 0, object.widthCm / 2, 0]} stroke="#F7F5F2" strokeWidth={9 * inverseScale} />
-      <Line points={[object.properties?.hinge === 'right' ? object.widthCm / 2 : -object.widthCm / 2, 0, object.properties?.hinge === 'right' ? object.widthCm / 2 : -object.widthCm / 2, object.widthCm]} stroke={object.color} strokeWidth={3 * inverseScale} />
-      <Line x={object.properties?.hinge === 'right' ? object.widthCm / 2 : -object.widthCm / 2} points={arcPoints(object.properties?.hinge !== 'right', object.widthCm)} stroke={object.color} strokeWidth={1.5 * inverseScale} dash={[5 * inverseScale, 4 * inverseScale]} />
+      <Line points={[hingeX, 0, hingeX + leafEnd.x, leafEnd.y]} stroke={object.color} strokeWidth={3 * inverseScale} />
+      <Line x={hingeX} points={arcPoints(hingeLeft, object.widthCm, openingAngle)} stroke={object.color} strokeWidth={1.5 * inverseScale} dash={[5 * inverseScale, 4 * inverseScale]} />
     </> : object.catalogId === 'window' ? <>
       <Line points={[-object.widthCm / 2, -3, object.widthCm / 2, -3]} stroke="#6C93B8" strokeWidth={3 * inverseScale} />
       <Line points={[-object.widthCm / 2, 3, object.widthCm / 2, 3]} stroke="#6C93B8" strokeWidth={3 * inverseScale} />
-    </> : round ? <Circle radius={object.widthCm / 2} fill={object.color} opacity={object.kind === 'zone' ? 0.28 : 0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} /> : <Rect x={-object.widthCm / 2} y={-object.depthCm / 2} width={object.widthCm} height={object.depthCm} cornerRadius={object.kind === 'zone' ? 10 : 4} fill={object.color} opacity={object.kind === 'zone' ? 0.28 : object.kind === 'symbol' ? 0.75 : 0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} dash={object.kind === 'zone' ? [7 * inverseScale, 4 * inverseScale] : undefined} />}
+    </> : shape === 'round' ? <Circle radius={object.widthCm / 2} fill={object.color} opacity={object.kind === 'zone' ? 0.28 : 0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} />
+      : shape === 'ellipse' ? <Ellipse radiusX={object.widthCm / 2} radiusY={object.depthCm / 2} fill={object.color} opacity={0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} />
+      : shape === 'trapezoid' ? <Line closed points={trapezoidPoints(object.widthCm, object.depthCm)} fill={object.color} opacity={0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} lineJoin="round" />
+      : shape === 'bench' ? <Group><Rect x={-object.widthCm / 2} y={-object.depthCm / 2} width={object.widthCm} height={object.depthCm} cornerRadius={5} fill={object.color} opacity={0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} /><Line points={[-object.widthCm / 2 + 5, -object.depthCm / 2 + 8, object.widthCm / 2 - 5, -object.depthCm / 2 + 8]} stroke="#2F4A38" strokeWidth={3 * inverseScale} /></Group>
+      : shape === 'sofa' ? <Group><Rect x={-object.widthCm / 2} y={-object.depthCm / 2} width={object.widthCm} height={object.depthCm} cornerRadius={12} fill={object.color} opacity={0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} /><Rect x={-object.widthCm / 2 + 8} y={-object.depthCm / 2 + 7} width={object.widthCm - 16} height={16} cornerRadius={6} fill="#D6E3D2" stroke="#2F4A38" strokeWidth={1.2 * inverseScale} /><Line points={[-object.widthCm / 2 + 18, -object.depthCm / 2 + 24, -object.widthCm / 2 + 18, object.depthCm / 2 - 8]} stroke="#2F4A38" strokeWidth={4 * inverseScale} /><Line points={[object.widthCm / 2 - 18, -object.depthCm / 2 + 24, object.widthCm / 2 - 18, object.depthCm / 2 - 8]} stroke="#2F4A38" strokeWidth={4 * inverseScale} /></Group>
+      : <Rect x={-object.widthCm / 2} y={-object.depthCm / 2} width={object.widthCm} height={object.depthCm} cornerRadius={object.kind === 'zone' ? 10 : 4} fill={object.color} opacity={object.kind === 'zone' ? 0.28 : object.kind === 'symbol' ? 0.75 : 0.9} stroke="#163A5C" strokeWidth={1.4 * inverseScale} dash={object.kind === 'zone' ? [7 * inverseScale, 4 * inverseScale] : undefined} />}
     <AttachedSeats object={object} inverseScale={inverseScale} />
     {object.catalogId !== 'door' && object.catalogId !== 'window' && <Text text={label} width={Math.max(50, object.widthCm - 8)} x={-Math.max(50, object.widthCm - 8) / 2} y={-7 * inverseScale} align="center" fontFamily="Glacial Indifference, Jost, Mulish, Helvetica Neue, Arial, sans-serif" fontSize={11 * inverseScale} fill={textColorForFill(object.color, object.kind === 'zone')} listening={false} />}
     {selected && <Rect x={-object.widthCm / 2 - 6 * inverseScale} y={-object.depthCm / 2 - 6 * inverseScale} width={object.widthCm + 12 * inverseScale} height={object.depthCm + 12 * inverseScale} stroke="#791D22" strokeWidth={3 * inverseScale} dash={[8 * inverseScale, 4 * inverseScale]} cornerRadius={6 * inverseScale} listening={false} />}
     {warningColor && <Rect x={-object.widthCm / 2 - 3 * inverseScale} y={-object.depthCm / 2 - 3 * inverseScale} width={object.widthCm + 6 * inverseScale} height={object.depthCm + 6 * inverseScale} stroke={warningColor} strokeWidth={3 * inverseScale} cornerRadius={5 * inverseScale} listening={false} />}
-    {object.locked && <Text text="●" x={object.widthCm / 2 - 10 * inverseScale} y={-object.depthCm / 2 + 2 * inverseScale} fontFamily="Glacial Indifference, Jost, Mulish, Helvetica Neue, Arial, sans-serif" fontSize={8 * inverseScale} fill="#163A5C" listening={false} />}
+    {object.locked && <LockMarker object={object} inverseScale={inverseScale} />}
   </Group>;
 }
 
@@ -124,6 +149,7 @@ export function CanvasEditor({ stageRef }: CanvasEditorProps) {
   const showAnalysis = usePlannerStore((s) => s.showAnalysis);
   const mode = usePlannerStore((s) => s.mode);
   const zoom = usePlannerStore((s) => s.zoom);
+  const snapStepCm = usePlannerStore((s) => s.snapStepCm);
 
   useEffect(() => {
     const element = wrapperRef.current;
@@ -147,6 +173,8 @@ export function CanvasEditor({ stageRef }: CanvasEditorProps) {
   const inverseScale = 1 / scale;
   const warnings = useMemo(() => analyzeVariant(variant, project.meta.targetStudentCount, project.meta.wheelchairMode), [variant, project.meta.targetStudentCount, project.meta.wheelchairMode]);
   const objectWarnings = useMemo(() => warningMap(warnings), [warnings]);
+  const scaleUnitCm = [50, 100, 200, 500].reduce((best, value) => Math.abs(value * scale - 90) < Math.abs(best * scale - 90) ? value : best, 100);
+  const scaleUnitLabel = scaleUnitCm >= 100 ? `${scaleUnitCm / 100} m` : `${scaleUnitCm} cm`;
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -205,6 +233,7 @@ export function CanvasEditor({ stageRef }: CanvasEditorProps) {
         </Group>
       </Layer>
     </Stage>
-    <div className="canvas-badge">10-cm-Raster · Einrasten aktiv</div>
+    <div className="canvas-badge">10-cm-Raster · Einrasten {snapStepCm} cm · Objektfang aktiv</div>
+    <div className="scale-legend"><span>{scaleUnitLabel}</span><i style={{ width: `${scaleUnitCm * scale}px` }} /></div>
   </main>;
 }
