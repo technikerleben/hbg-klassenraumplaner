@@ -1,6 +1,6 @@
 import {
   Accessibility, AlertTriangle, Download, FileDown, FileImage, FolderOpen, Grid3X3,
-  LayoutTemplate, Lock, Plus, Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut,
+  Box, LayoutTemplate, Lock, Plus, Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import type { AppMode } from '../store/usePlannerStore';
 import { usePlannerStore } from '../store/usePlannerStore';
@@ -59,6 +59,7 @@ export function Toolbar({ onExportPng, onExportJpg, onExportPdf, onPrint, onExpo
             <Icon size={18} /><span>{label}</span>
           </button>
         ))}
+        <button onClick={() => window.dispatchEvent(new CustomEvent('hbg-open-3d'))} title="3D-Ansicht"><Box size={18} /><span>3D</span></button>
       </nav>
 
       <div className="tool-actions">
